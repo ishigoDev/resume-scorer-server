@@ -1,6 +1,11 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const { OpenAI } = require('openai');
+const morgan = require('morgan');
+const fs = require('fs');
+const path = require('path');
+const archiver = require('archiver');
+const logger = require('./logger');
 
 // Load environment variables
 dotenv.config();
@@ -10,10 +15,26 @@ const port = process.env.PORT || 3000;
 
 // Middleware to parse JSON bodies
 app.use(express.json());
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// Morgan middleware for logging requests to /check-resume-score only
+app.use('/check-resume-score', morgan('combined', { stream: logger.stream }));
+// Custom middleware to log request body for /check-resume-score
+app.use('/check-resume-score', (req, res, next) => {
+  if (req.method === 'POST') {
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip || req.connection.remoteAddress,
+      body: req.body
+    };
+    // Optionally truncate body if too large
+    const bodyStr = JSON.stringify(logEntry.body);
+    if (bodyStr.length > 1000) {
+      logEntry.body = bodyStr.substring(0, 1000) + '... [truncated]';
+    }
+    logger.info('Request body', logEntry);
+  }
+  next();
 });
 
 // POST endpoint to check resume score
@@ -75,6 +96,10 @@ app.get('/health', (req, res) => {
     service: 'resume-scorer-server'
   });
 });
+
+// Logs router
+const logsRouter = require('./routes/logs');
+app.use('/logs', logsRouter);
 
 // Start the server
 app.listen(port, () => {
