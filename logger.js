@@ -3,15 +3,16 @@ import 'winston-daily-rotate-file';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import os from 'os';
 
 // Get __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure log directory exists
-const logDir = path.join(__dirname, 'logs');
+// Use system temporary directory for logs to avoid read-only file system issues
+const logDir = path.join(os.tmpdir(), 'resume-scorer-logs');
 if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir);
+  fs.mkdirSync(logDir, { recursive: true });
 }
 
 // Create Winston logger with daily rotate file
