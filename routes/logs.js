@@ -1,22 +1,20 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const archiver = require('archiver');
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import * as archiver from 'archiver';
 
 const router = express.Router();
 
 // GET /logs?file=number|all
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const { file } = req.query;
 
   // Logs directory is two levels up from this file: /routes/logs.js -> /logs
   const logDir = path.join(__dirname, '..', 'logs');
 
-  // Read all files in the logs directory
-  fs.readdir(logDir, (err, files) => {
-    if (err) {
-      return res.status(500).json({ error: 'Unable to read logs directory' });
-    }
+  try {
+    // Read all files in the logs directory
+    const files = await fs.promises.readdir(logDir);
 
     // Filter for our log files
     const logFiles = files.filter(f =>
@@ -50,21 +48,21 @@ router.get('/', (req, res) => {
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', 'attachment; filename="resume-scorer-logs.zip"');
 
-      const archive = archiver('zip', {
+      const archiveInstance = archiver.default('zip', {
         zlib: { level: 9 } // Maximum compression
       });
 
       // Pipe archive to response
-      archive.pipe(res);
+      archiveInstance.pipe(res);
 
       // Add each log file to the archive
-      filesWithDate.forEach(fileObj => {
+      for (const fileObj of filesWithDate) {
         const filePath = path.join(logDir, fileObj.filename);
-        archive.file(filePath, { name: fileObj.filename });
-      });
+        archiveInstance.file(filePath, { name: fileObj.filename });
+      }
 
       // Finalize the archive
-      archive.finalize();
+      await archiveInstance.finalize();
     } else {
       // Try to parse file as a number (1-indexed)
       const index = parseInt(file, 10);
@@ -82,25 +80,28 @@ router.get('/', (req, res) => {
       const filePath = path.join(logDir, selectedFile.filename);
 
       // Check if file exists
-      fs.access(filePath, fs.constants.F_OK, (err) => {
-        if (err) {
-          return res.status(404).json({ error: 'Log file not found on disk' });
-        }
+      try {
+        await fs.promises.access(filePath, fs.constants.F_OK);
+      } catch (err) {
+        return res.status(404).json({ error: 'Log file not found on disk' });
+      }
 
-        // Set appropriate headers
-        res.setHeader('Content-Disposition', `attachment; filename="${selectedFile.filename}"`);
-        if (selectedFile.isCompressed) {
-          res.setHeader('Content-Type', 'application/gzip');
-        } else {
-          res.setHeader('Content-Type', 'text/plain');
-        }
+      // Set appropriate headers
+      res.setHeader('Content-Disposition', `attachment; filename="${selectedFile.filename}"`);
+      if (selectedFile.isCompressed) {
+        res.setHeader('Content-Type', 'application/gzip');
+      } else {
+        res.setHeader('Content-Type', 'text/plain');
+      }
 
-        // Send the file
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(res);
-      });
+      // Send the file
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
     }
-  });
+  } catch (err) {
+    console.error('Error in logs route:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-module.exports = router;
+export default router;

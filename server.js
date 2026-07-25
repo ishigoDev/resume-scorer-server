@@ -1,11 +1,10 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const { OpenAI } = require('openai');
-const morgan = require('morgan');
-const fs = require('fs');
-const path = require('path');
-const archiver = require('archiver');
-const logger = require('./logger');
+import express from 'express';
+import dotenv from 'dotenv';
+import { OpenAI } from 'openai';
+import morgan from 'morgan';
+import fs from 'fs';
+import path from 'path';
+import logger from './logger.js';
 
 // Load environment variables
 dotenv.config();
@@ -35,6 +34,11 @@ app.use('/check-resume-score', (req, res, next) => {
     logger.info('Request body', logEntry);
   }
   next();
+});
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // POST endpoint to check resume score
@@ -98,8 +102,8 @@ app.get('/health', (req, res) => {
 });
 
 // Logs router
-const logsRouter = require('./routes/logs');
-app.use('/logs', logsRouter);
+const logsRouter = await import('./routes/logs.js');
+app.use('/logs', logsRouter.default);
 
 // Start the server
 app.listen(port, () => {

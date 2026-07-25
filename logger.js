@@ -1,7 +1,12 @@
-const winston = require('winston');
-require('winston-daily-rotate-file');
-const fs = require('fs');
-const path = require('path');
+import winston from 'winston';
+import 'winston-daily-rotate-file';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Ensure log directory exists
 const logDir = path.join(__dirname, 'logs');
@@ -27,4 +32,4 @@ const logger = winston.createLogger({
   ]
 });
 
-module.exports = logger;
+export default logger;
