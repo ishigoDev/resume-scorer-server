@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import fs from 'fs';
 import path from 'path';
 import logger from './logger.js';
-import buildPrompt from './promptBuilder.js';
+import buildPrompt from './prompt.ts';
 
 // Load environment variables
 dotenv.config();
@@ -61,7 +61,7 @@ app.post('/check-resume-score', async (req, res) => {
       temperature: 0.7,
       max_tokens: 1000,
     });
-    
+
     // Return the response
     res.json({
       success: true,
