@@ -44,7 +44,8 @@ const openai = new OpenAI({
 // POST endpoint to check resume score
 app.post('/check-resume-score', async (req, res) => {
   try {
-    const { prompt } = req.body;
+    const { resume, jobDescription, keywordResult } = req.body;
+    const prompt = buildPrompt(resume, jobDescription, keywordResult);
 
     // Validate input
     if (!prompt || typeof prompt !== 'string') {
