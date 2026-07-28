@@ -5,7 +5,7 @@
    * @param {Object} keywordResult - Results from keyword matcher
    * @returns {string} Formatted prompt
    */
-export const buildPrompt = (resumeText:string,jdText:string, keywordResult:any) =>{
+export const buildPrompt = (resumeText,jdText, keywordResult) =>{
     return `You are an expert resume reviewer and ATS optimizer. Analyze this resume against the job description and provide detailed feedback.
 
 JOB DESCRIPTION:

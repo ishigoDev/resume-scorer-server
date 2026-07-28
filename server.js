@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import fs from 'fs';
 import path from 'path';
 import logger from './logger.js';
-import buildPrompt from './prompt.ts';
+import buildPrompt from './prompt.js';
 
 // Load environment variables
 dotenv.config();
